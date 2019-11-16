@@ -53,7 +53,7 @@ def start_delete_comments():
     while comment_count > 0:
         for comment in reddit.redditor(username).comments.new(limit=limitation):
             comment_to_delete = reddit.comment(comment)
-            if comment_to_delete.score() <= delete_if_below_comment_karma:
+            if comment_to_delete.score < delete_if_below_comment_karma:
                 comment_to_delete.edit('This User\'s comments have been edited and deleted.')
                 comment_to_delete.delete()
                 comment_count -= 1
@@ -71,7 +71,7 @@ def start_delete_submissions():
     while submission_count > 0:
         for submission in reddit.redditor(username).submissions.new(limit=limitation):
             submission_to_delete = reddit.submission(submission)
-            if submission_to_delete.score() <= delete_if_below_post_karma:
+            if submission_to_delete.score < delete_if_below_post_karma:
                 try:
                     submission_to_delete.edit('This User\'s submissions have been edited and deleted.')
                 except:
