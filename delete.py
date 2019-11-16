@@ -8,9 +8,11 @@ username = ''
 password = ''
 
 # Deletion options
-limitation = None # None will delete ALL comments/submissions, 10 will delete recent 10 etc.
-delete_comments = False # Set to False to not delete comments
-delete_submissions = False # Set to False to not delete submissions
+limitation = None  # None will delete ALL comments/submissions, 10 will delete recent 10 etc.
+delete_comments = False  # Set to False to not delete comments
+delete_submissions = False  # Set to False to not delete submissions
+delete_if_below_comment_karma = 100000  # delete all comments that have less than this amount of karma
+delete_if_below_post_karma = 100000  # delete all posts that have less than this amount of karma
 
 
 # Your app details
@@ -44,32 +46,42 @@ def get_submission_total():
 
 
 def start_delete_comments():
+    global delete_if_below_comment_karma
     print('Calculating number of comments, please wait...')
     comment_count = get_comment_total() # 490
     print(f'Beginning deletion of {comment_count} comments.')
     while comment_count > 0:
         for comment in reddit.redditor(username).comments.new(limit=limitation):
             comment_to_delete = reddit.comment(comment)
-            comment_to_delete.edit('This User\'s comments have been edited and deleted.')
-            comment_to_delete.delete()
-            comment_count -= 1
-            print(f'{comment} deleted. {comment_count} to go.')
+            if comment_to_delete.score() <= delete_if_below_comment_karma:
+                comment_to_delete.edit('This User\'s comments have been edited and deleted.')
+                comment_to_delete.delete()
+                comment_count -= 1
+                print(f'{comment} deleted. {comment_count} to go.')
+            else:
+                comment_count -= 1
+                print(f'{comment} skipped. {comment_count} to go.')
 
 
 def start_delete_submissions():
+    global delete_if_below_post_karma
     print('Calculating number of submissions, please wait...')
     submission_count = get_submission_total()
     print(f'Beginning deletion of {submission_count} submissions.')
     while submission_count > 0:
         for submission in reddit.redditor(username).submissions.new(limit=limitation):
             submission_to_delete = reddit.submission(submission)
-            try:
-                submission_to_delete.edit('This User\'s submissions have been edited and deleted.')
-            except:
-                print('Attempted to edit post and failed')
-            submission_to_delete.delete()
-            submission_count -= 1
-            print(f'{submission} deleted. {submission_count} to go.')
+            if submission_to_delete.score() <= delete_if_below_post_karma:
+                try:
+                    submission_to_delete.edit('This User\'s submissions have been edited and deleted.')
+                except:
+                    print('Attempted to edit post and failed')
+                submission_to_delete.delete()
+                submission_count -= 1
+                print(f'{submission} deleted. {submission_count} to go.')
+            else:
+                submission_count -= 1
+                print(f'{submission} skipped. {submission_count} to go.')
 
 
 if __name__ == '__main__':
